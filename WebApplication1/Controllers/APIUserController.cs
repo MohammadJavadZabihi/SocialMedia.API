@@ -34,7 +34,7 @@ namespace SocialMedia.API.Controllers
         private readonly IConfiguration _configuration;
         private readonly IAuthentication _authenticationservies;
         private readonly SendEmailServies _sendEmailServies;
-        public APIUserController(IUserServies userServies, IMapper mapper, 
+        public APIUserController(IUserServies userServies, IMapper mapper,
             IConfiguration configuration, IAuthentication authentication, SendEmailServies sendEmailServies)
         {
             _userServies = userServies ?? throw new ArgumentException(nameof(userServies));
@@ -66,12 +66,18 @@ namespace SocialMedia.API.Controllers
         }
 
         [HttpGet]
-        [Route("FullInforMationWithUserName/{username}")]
-        public async Task<ActionResult<IEnumerable<UserViewModel>>> FullInforMationWithUserName(string username)
+        [Route("FullInforMationWithUserName")]
+        public async Task<ActionResult<IEnumerable<UserViewModel>>> FullInforMationWithUserName([FromBody] UserForGetInformation user)
         {
             try
             {
-                var users = await _userServies.GetUserByNameAsync(username);
+                var users = await _userServies.GetUserWithUserNameAndEmail(user.UserName, user.Email);
+
+                if (users == null)
+                    return NotFound(new
+                    {
+                        StatuceFindUser = $"Cannot Find user with {user.UserName} and {user.Email}"
+                    });
 
                 return Ok(users);
             }
@@ -81,7 +87,7 @@ namespace SocialMedia.API.Controllers
             }
         }
 
-        //Get All Users Without Password and Security Information
+
         [Route("GetUserWithoutPassword")]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<UserViewModel>>> GetUserWithoutPassword()
@@ -89,34 +95,6 @@ namespace SocialMedia.API.Controllers
             var users = await _userServies.GetUsersAsync();
 
             return Ok(_mapper.Map<IEnumerable<UserViewModel>>(users));
-        }
-
-        [Route("GetUserWithoutPasswordWithUserName/{username}")]
-        [HttpGet]
-        public async Task<ActionResult<UserViewModel>> GetUserWithoutPasswordWithUserName(string username)
-        {
-            var user = await _userServies.GetUserByNameAsync(username);
-
-            if (user == null)
-            {
-                return NotFound("User not found.");
-            }
-
-            return Ok(_mapper.Map<UserViewModel>(user));
-        }
-
-        [Route("GetUserFullInfoWithUserName/{username}")]
-        [HttpGet]
-        public async Task<ActionResult<UserViewModel>> GetUserFullInfoWithUserName(string username)
-        {
-            var user = await _userServies.GetUserByNameAsync(username);
-
-            if (user == null)
-            {
-                return NotFound("User not found.");
-            }
-
-            return Ok(_mapper.Map<UserViewModel>(user));
         }
 
         #endregion
@@ -146,10 +124,11 @@ namespace SocialMedia.API.Controllers
 
                 var userId = await _userServies.RegisterUserAsync(userRegisterViewModel);
 
-                var token = await _authenticationservies.GetJWTTokenForCookiesAnaAuthenticate(userRegisterViewModel.UserName,
-                    userRegisterViewModel.Email, _configuration["Authentication:SecretForKey"]);
-
                 var user = await _userServies.GetUserByNameAsync(userRegisterViewModel.UserName);
+
+                var token = await _authenticationservies.GetJWTTokenForCookiesAnaAuthenticate(user.UserName,
+    user.Email, user.ActiveCode, _configuration["Authentication:SecretForKey"]);
+
                 string linkActivateUserAccount;
                 if (user != null)
                 {
@@ -230,7 +209,7 @@ namespace SocialMedia.API.Controllers
         [Route("FullUpdate")]
         public async Task<ActionResult> UpdateUser([FromBody] FullUpdateUserViewModel user)
         {
-            if(!ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
@@ -238,7 +217,7 @@ namespace SocialMedia.API.Controllers
             var username = user.UserName;
             var existUser = await _userServies.GetUserByNameAsync(username);
 
-            if(existUser == null)
+            if (existUser == null)
             {
                 return NotFound(new
                 {
@@ -249,20 +228,19 @@ namespace SocialMedia.API.Controllers
             try
             {
                 var userVieModel = _mapper.Map<FullUpdateUserViewModel>(existUser);
-                
-                if(!ModelState.IsValid)
+
+                if (!ModelState.IsValid)
                 {
                     return BadRequest(ModelState);
                 }
 
-                existUser.UserName = user.UserName;
                 existUser.Email = user.Email;
                 existUser.Bio = user.Bio;
 
                 return Ok(new
                 {
                     StatuceUpdateUser = "SuccessFully",
-                    ReplaceUserName = user.UserName,
+                    UserName = user.UserName,
                     ReplaceEmail = user.Email,
                     ReplaceBio = user.Bio,
                 });
@@ -312,18 +290,18 @@ namespace SocialMedia.API.Controllers
 
         [HttpDelete]
         [Route("DeletUserWithUserName")]
-        public async Task<ActionResult> DeletUserWithToken([FromBody] string username)
+        public async Task<ActionResult> DeletUserWithToken([FromBody] UserForGetInformation user)
         {
             try
             {
-                var user = _userServies.GetUserByNameAsync(username);
+                var exixstUser = await _userServies.GetUserWithUserNameAndEmail(user.UserName, user.Email);
 
                 if (user == null)
                 {
                     return NotFound("Not Found User For Deleting");
                 }
 
-                var deletUser = _userServies.DeletUserWithTokenAsync(username);
+                _userServies.DeletUserWithTokenAsync(exixstUser);
 
                 return Ok("User Deleted SuccessFully");
             }
@@ -338,8 +316,8 @@ namespace SocialMedia.API.Controllers
         #region Edite user Password
 
         [HttpPatch]
-        [Route("ResetUserPassword")]
-        public async Task<ActionResult> ResetUserPassword([FromBody] string activeCode,
+        [Route("ResetUserPassword/{activeCode}")]
+        public async Task<ActionResult> ResetUserPassword(string activeCode,
             [FromBody] JsonPatchDocument<ResetPasswordViewModel> resetPatchDoc)
         {
             if (!ModelState.IsValid)
@@ -383,9 +361,9 @@ namespace SocialMedia.API.Controllers
 
         #region Active user
 
-        [Route("ActiveUserAccount")]
+        [Route("ActiveUserAccount/{Id}")]
         [HttpPost]
-        public async Task<ActionResult> ActiveUserAccount([FromBody] string Id)
+        public async Task<ActionResult> ActiveUserAccount(string Id)
         {
             if (!ModelState.IsValid)
             {
@@ -409,7 +387,7 @@ namespace SocialMedia.API.Controllers
 
         [Route("LoginUser")]
         [HttpPost]
-        public async Task<ActionResult> LoginUser(UserLoginViewModel login)
+        public async Task<ActionResult> LoginUser([FromBody] UserLoginViewModel login)
         {
             if (!ModelState.IsValid)
             {
@@ -421,7 +399,7 @@ namespace SocialMedia.API.Controllers
             if (user != null)
             {
                 var token = await _authenticationservies.GetJWTTokenForCookiesAnaAuthenticate(user.UserName,
-                    user.Email, _configuration["Authentication:SecretForKey"]);
+                    user.Email, user.ActiveCode, _configuration["Authentication:SecretForKey"]);
 
                 if (user.IsActive)
                 {

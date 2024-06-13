@@ -37,7 +37,8 @@ namespace SocialMedia.Core.Servies.Interface
         Task<bool> ActiveUserAccountAsync(string activeCode);
         Task<User?> LoginuserAsync(UserLoginViewModel user);
         Task<User?> GetUserByNameAsync(string username);
-        Task DeletUserWithTokenAsync(string username);
+        Task DeletUserWithTokenAsync(User user);
+        Task<User?> GetUserWithUserNameAndEmail(string username, string email);
         #endregion
     }
 }

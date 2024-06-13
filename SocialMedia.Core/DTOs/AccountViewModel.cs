@@ -136,4 +136,18 @@ namespace SocialMedia.Core.DTOs
         [MaxLength(300, ErrorMessage = "{۰} نمیتواند بیشتر از {۱} کاراکتر باشد")]
         public string Bio { get; set; }
     }
+
+    public class UserForGetInformation
+    {
+        [DisplayName("نام کاربری")]
+        [MaxLength(255, ErrorMessage = "{0} نمی‌تواند بیشتر از {1} کاراکتر باشد")]
+        [Required(ErrorMessage = "لطفا {0} را وارد نمایید")]
+        public string UserName { get; set; }
+
+        [Display(Name = "ایمیل")]
+        [Required(ErrorMessage = "لطفا {0} را وارد کنید")]
+        [MaxLength(200, ErrorMessage = "{0} نمی‌تواند بیشتر از {1} کاراکتر باشد.")]
+        [EmailAddress(ErrorMessage = "ایمیل وارد شده معتبر نمی‌باشد")]
+        public string Email { get; set; }
+    }
 }

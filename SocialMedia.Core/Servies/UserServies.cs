@@ -179,15 +179,18 @@ namespace SocialMedia.Core.Servies
             return await _context.Users.FirstOrDefaultAsync(u => u.UserName == username);
         }
 
-        public async Task DeletUserWithTokenAsync(string username)
+        public async Task DeletUserWithTokenAsync(User user)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserName == username);
-
             if( user != null )
             {
                 _context.Users.Remove(user);
                 await SaveChangesAsync();
             }
+        }
+
+        public async Task<User?> GetUserWithUserNameAndEmail(string username, string email)
+        {
+            return await _context.Users.FirstOrDefaultAsync(u => u.UserName == username && u.Email == email);
         }
     }
 }

@@ -36,7 +36,7 @@ namespace SocialMedia.Core.Servies
             return await _context.userAuthenticationForApiKeys.FirstOrDefaultAsync(u => u.UserName == username && u.Password == password);
         }
 
-        public async Task<string> GetJWTTokenForCookiesAnaAuthenticate(string username, string email, string key)
+        public async Task<string> GetJWTTokenForCookiesAnaAuthenticate(string username, string email, string activeCode, string key)
         {
             var securityKey = new SymmetricSecurityKey(
                 Encoding.ASCII.GetBytes(_configuration["Authentication:SecretForKey"])
@@ -47,6 +47,7 @@ namespace SocialMedia.Core.Servies
             var claimsForToken = new List<Claim>();
             claimsForToken.Add(new Claim(ClaimTypes.NameIdentifier, username));
             claimsForToken.Add(new Claim(ClaimTypes.Email, email));
+            claimsForToken.Add(new Claim("ActiveCode", activeCode));
 
             var jwtSecurityToke = new JwtSecurityToken(
                 _configuration["Authentication:Issuer"],
