@@ -3,12 +3,12 @@ this is a simple api for registration, login, password reset, ... user + user au
 
 ______________________________________________________________________________________________________________________
 Attention
-All requests start with "http://192.168.101.204:7282/api/Users/The Action you need" (for user oprations)
+All requests start with "http://mahanapptest.ir/api/Users/The Action you need" (for user oprations)
 
 All requests start with 
-"http://192.168.101.204:7282/api/ AuthenticationForToken/The Action you need" (for user Authentication)
+" http://mahanapptest.ir/api/ AuthenticationForToken/The Action you need" (for user Authentication)
 
-Authentication
+________________________________________Authentication
 All endpoints require authentication. Make sure to include the JWT token in the Authorization header for each request.
 Endpoint : POST authenticate
 Description : It gives you a token that you can use to authenticate
@@ -18,7 +18,7 @@ Response :
 •	Unauthorized, if you don’t have permission
 
 Example Request:
-	Post http:// 192.168.101.204:7282/api/AuthenticationForToken/authenticate	
+	Post http://mahanapptest.ir /api/AuthenticationForToken/authenticate	
 	Content-Type: application/json
 	{
   	"UserName": "mahan",
@@ -34,7 +34,7 @@ Response:
 •	200 OK: Returns a list of user information.
 •	500 Internal Server Error: Indicates a server error.
 Example Request:
-GET http:// 192.168.101.204:7282/api/Users/FullInforMation
+GET http://mahanapptest.ir/api/Users/FullInforMation
 Authorization: Bearer <JWT_TOKEN>
 ________________________________________
 2. Get Full Information of a User by Username and Email
@@ -48,7 +48,7 @@ Response:
 •	404 Not Found: Indicates the user was not found.
 •	500 Internal Server Error: Indicates a server error.
 Example Request:
-GET http:// 192.168.101.204:7282/api/Users/FullInforMationWithUserName
+GET http://mahanapptest.ir/api/Users/FullInforMationWithUserName
 Authorization: Bearer <JWT_TOKEN>
 Content-Type: application/json
 {
@@ -62,7 +62,7 @@ Description: Retrieves a list of users without including their passwords.
 Response:
 •	200 OK: Returns a list of user information without passwords.
 Example Request:
-GET http:// 192.168.101.204:7282/api/Users/GetUserWithoutPassword
+GET http://mahanapptest.ir/api/Users/GetUserWithoutPassword
 Authorization: Bearer <JWT_TOKEN>
 ________________________________________
 4. Register a New User
@@ -80,7 +80,7 @@ Response:
 •	400 Bad Request: Indicates validation errors or if the username/email already exists.
 •	500 Internal Server Error: Indicates a server error.
 Example Request:
-POST http:// 192.168.101.204:7282/api/Users/RegisterUser
+POST http://mahanapptest.ir/api/Users/RegisterUser
 Authorization: Bearer <JWT_TOKEN>
 Content-Type: application/json
 
@@ -105,7 +105,7 @@ Response:
 •	404 Not Found: Indicates the user was not found.
 •	500 Internal Server Error: Indicates a server error.
 Example Request:
-PATCH http:// 192.168.101.204:7282/api/Users/PartialUpdate/1
+PATCH http://mahanapptest.ir/api/Users/PartialUpdate/1
 Authorization: Bearer <JWT_TOKEN>
 Content-Type: application/json-patch+json
 [
@@ -125,7 +125,7 @@ Response:
 •	404 Not Found: Indicates the user was not found.
 •	500 Internal Server Error: Indicates a server error.
 Example Request:
-PUT http:// 192.168.101.204:7282/api/Users/FullUpdate
+PUT http://mahanapptest.ir/api/Users/FullUpdate
 Authorization: Bearer <JWT_TOKEN>
 Content-Type: application/json
 {
@@ -145,7 +145,7 @@ Response:
 •	404 Not Found: Indicates the user was not found.
 •	500 Internal Server Error: Indicates a server error.
 Example Request:
-DELETE http:// 192.168.101.204:7282/api/Users/DeletUserWithUserName
+DELETE http://mahanapptest.ir/api/Users/DeletUserWithUserName
 Authorization: Bearer <JWT_TOKEN>
 Content-Type: application/json
 {
@@ -168,7 +168,7 @@ Response:
 
 
 Example Request:
-PATCH http:// 192.168.101.204:7282/api/Users/ResetUserPassword/ABC123
+PATCH http://mahanapptest.ir/api/Users/ResetUserPassword/ABC123
 Authorization: Bearer <JWT_TOKEN>
 Content-Type: application/json-patch+json
 [
@@ -185,7 +185,7 @@ Response:
 •	400 Bad Request: Indicates validation errors.
 •	500 Internal Server Error: Indicates a server error.
 Example Request:
-POST http://192.168.101.204:7282/api/Users/ActiveUserAccount/ABC123
+POST http://mahanapptest.ir/api/Users/ActiveUserAccount/ABC123
 Authorization: Bearer <JWT_TOKEN>
 ________________________________________
 10. Login User
@@ -199,11 +199,10 @@ Response:
 •	400 Bad Request: Indicates validation errors or inactive account.
 •	404 Not Found: Indicates the user was not found.
 Example Request:
-POST http://192.168.101.204:7282/api/Users/LoginUser
+POST http://mahanapptest.ir/api/Users/LoginUser
 Authorization: Bearer <JWT_TOKEN>
 Content-Type: application/json
 {
   "Email": "example@example.com",
   "Password": "Password123!"
 }
-
