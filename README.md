@@ -1,7 +1,3 @@
-Hi Hi 
-this is a simple api for registration, login, password reset, ... user + user authentication with JWT token. You can read the word document available in this repository or read the rest of this article to get more information and see how to work with this API.
-
-______________________________________________________________________________________________________________________
 Attention
 All requests start with "http://mahanapptest.ir/api/Users/The Action you need" (for user oprations)
 
@@ -21,51 +17,13 @@ Example Request:
 	Post http://mahanapptest.ir /api/AuthenticationForToken/authenticate	
 	Content-Type: application/json
 	{
-  	"UserName": "mahan",
-  	"Password": "mahan.z.road0908"
+  	"UserName": "username",
+  	"Password": "password"
 }
 
 ________________________________________
 Endpoints
-1. Get Full Information of All Users
-Endpoint: GET /FullInforMation
-Description: Retrieves full information of all users from the database.
-Response:
-•	200 OK: Returns a list of user information.
-•	500 Internal Server Error: Indicates a server error.
-Example Request:
-GET http://mahanapptest.ir/api/Users/FullInforMation
-Authorization: Bearer <JWT_TOKEN>
-________________________________________
-2. Get Full Information of a User by Username and Email
-Endpoint: GET /FullInforMationWithUserName
-Description: Retrieves user information based on the provided username and email.
-Request Body:
-•	UserName (string): The username of the user.
-•	Email (string): The email of the user.
-Response:
-•	200 OK: Returns the user information.
-•	404 Not Found: Indicates the user was not found.
-•	500 Internal Server Error: Indicates a server error.
-Example Request:
-GET http://mahanapptest.ir/api/Users/FullInforMationWithUserName
-Authorization: Bearer <JWT_TOKEN>
-Content-Type: application/json
-{
-  "UserName": "exampleUser",
-  "Email": "example@example.com"
-}
-________________________________________
-3. Get Users Without Password
-Endpoint: GET /GetUserWithoutPassword
-Description: Retrieves a list of users without including their passwords.
-Response:
-•	200 OK: Returns a list of user information without passwords.
-Example Request:
-GET http://mahanapptest.ir/api/Users/GetUserWithoutPassword
-Authorization: Bearer <JWT_TOKEN>
-________________________________________
-4. Register a New User
+1. Register a New User
 Endpoint: POST /RegisterUser
 Description: Registers a new user in the system.
 Request Body:
@@ -73,14 +31,12 @@ Request Body:
 •	Email (string): The email of the new user.
 •	Password (string): The password of the new user.
 •	Bio (string): The Biography of the new user.
-•	RePassword (string): The RePassword must be like Password.
-•	IsActive (bool): Indicates if the user account is active. (optional)
 Response:
 •	200 OK: Returns registration success information and activation link.
 •	400 Bad Request: Indicates validation errors or if the username/email already exists.
 •	500 Internal Server Error: Indicates a server error.
 Example Request:
-POST http://mahanapptest.ir/api/Users/RegisterUser
+POST http://mahanapptest.ir/api/Users/ RegisterUser
 Authorization: Bearer <JWT_TOKEN>
 Content-Type: application/json
 
@@ -88,37 +44,16 @@ Content-Type: application/json
   "UserName": "newUser",
   "Email": "newuser@example.com",
   "Password": "Password123!",
-  "RePassword": "Password123!",
-  "IsActive": false(optional)
 }
 ________________________________________
-5. Partially Update a User (You can Skip This Because we have another update with PUT action)
-Endpoint: PATCH /PartialUpdate/{id}
-Description: Partially updates user information.
-Request Parameters:
-•	id (int): The ID of the user to update.
-Request Body:
-•	JSON Patch Document: Contains the fields to be updated.
-Response:
-•	204 No Content: Indicates the update was successful.
-•	400 Bad Request: Indicates validation errors.
-•	404 Not Found: Indicates the user was not found.
-•	500 Internal Server Error: Indicates a server error.
-Example Request:
-PATCH http://mahanapptest.ir/api/Users/PartialUpdate/1
-Authorization: Bearer <JWT_TOKEN>
-Content-Type: application/json-patch+json
-[
-  { "op": "replace", "path": "/Email", "value": "updatedemail@example.com" }
-]
-________________________________________
-6. Fully Update a User
+2. Fully Update a User
 Endpoint: PUT /FullUpdate
 Description: Fully updates user information.
 Request Body:
-•	UserName (string): The username of the user.
-•	Email (string): The new email of the user.
-•	Bio (string): The new bio of the user.
+•	OldUserName (string): The OldUserNameof the user.
+•	NewUserName (string): The NewUsername of the user.
+•	NewEmail (string): The new email of the user.
+•	NewBio (string): The new bio of the user.
 Response:
 •	200 OK: Returns the update success information.
 •	400 Bad Request: Indicates validation errors.
@@ -129,53 +64,59 @@ PUT http://mahanapptest.ir/api/Users/FullUpdate
 Authorization: Bearer <JWT_TOKEN>
 Content-Type: application/json
 {
-  "UserName": "existingUser",
-  "Email": "newemail@example.com",
-  "Bio": "This is the updated bio."
+  " OldUserName ": "existingUser",
+  " NewUserName ": "existingUser",
+
+  "NewEmail": "newemail@example.com",
+  "NewBio": "This is the updated bio."
 }
 ________________________________________
-7. Delete a User by Username and Email
-Endpoint: DELETE /DeletUserWithUserName
-Description: Deletes a user based on the provided username and email.
+3. Delete a User by Username
+Endpoint: DELETE / DeletUserWithUserName
+Description: Deletes a user based on the provided username.
 Request Body:
 •	UserName (string): The username of the user.
-•	Email (string): The email of the user.
 Response:
 •	200 OK: Indicates the user was successfully deleted.
 •	404 Not Found: Indicates the user was not found.
 •	500 Internal Server Error: Indicates a server error.
 Example Request:
-DELETE http://mahanapptest.ir/api/Users/DeletUserWithUserName
+DELETE http://mahanapptest.ir/api/Users/ DeletUserWithUserName
 Authorization: Bearer <JWT_TOKEN>
 Content-Type: application/json
 {
   "UserName": "exampleUser",
-  "Email": "example@example.com"
 }
 ________________________________________
-8. Reset User Password
-Endpoint: PATCH /ResetUserPassword/{activeCode}
-Description: Resets the user's password using the provided active code.
+4. Reset User Password
+Endpoint: POST / ResetUserPassword/Forgot
+Description: Resets the user's password When Forgot.
 Request Parameters:
-•	activeCode (string): The active code for resetting the password.
+•	UserName (string): The UserName of User.
+•	Password (string): The NewPassword of User.
+•	Email (string): The Email of User.
 Request Body:
-•	JSON Patch Document: Contains the new password field.
+•	UserName (string): The UserName of User.
+•	Password (string): The NewPassword of User.
+•	Email (string): The Email of User.
 Response:
-•	204 No Content: Indicates the password was successfully reset.
+•	200 Ok: Indicates the password was successfully reset.
 •	400 Bad Request: Indicates validation errors.
 •	404 Not Found: Indicates the user was not found.
 •	500 Internal Server Error: Indicates a server error.
 
 
 Example Request:
-PATCH http://mahanapptest.ir/api/Users/ResetUserPassword/ABC123
+POST http://mahanapptest.ir/api/Users/ ResetUserPassword/Forgot
 Authorization: Bearer <JWT_TOKEN>
 Content-Type: application/json-patch+json
-[
-  { "op": "replace", "path": "/Password", "value": "NewPassword123!" }
-]
+{
+  "UserName": "exampleUser",
+  " Password ": "new Password ",
+  " Email ": "example Email ",
+}
 ________________________________________
-9. Activate User Account
+5. Activate User Account
 Endpoint: POST /ActiveUserAccount/{Id}
 Description: Activates a user account using the provided active code.
 Request Parameters:
@@ -188,7 +129,7 @@ Example Request:
 POST http://mahanapptest.ir/api/Users/ActiveUserAccount/ABC123
 Authorization: Bearer <JWT_TOKEN>
 ________________________________________
-10. Login User
+6. Login User
 Endpoint: POST /LoginUser
 Description: Authenticates a user and returns a JWT token if successful.
 Request Body:
@@ -206,3 +147,23 @@ Content-Type: application/json
   "Email": "example@example.com",
   "Password": "Password123!"
 }
+7. Edite user Password When User Is Login
+Endpoint: POST /ResetUserPassword
+Description: Authenticates a user and returns a JWT token if successful.
+Request Body:
+•	UserName (string): The UserNameof the user.
+•	Password (string): The password of the user.
+Response:
+•	200 OK: Returns ResetUserPassword success information and JWT token.
+•	400 Bad Request: Indicates validation errors or inactive account.
+•	404 Not Found: Indicates the user was not found.
+Example Request:
+POST http://mahanapptest.ir/api/Users/ResetUserPassword
+Authorization: Bearer <JWT_TOKEN>
+Content-Type: application/json
+{
+  "UserName": "UserName",
+  "Password": "Password123!"
+}
+
+
