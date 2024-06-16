@@ -1,8 +1,7 @@
 ﻿using AutoMapper;
-using Azure;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+//using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.JsonPatch;
@@ -24,7 +23,6 @@ namespace SocialMedia.API.Controllers
 {
     [ApiController]
     [Route("api/Users")]
-    [Authorize]
     public class APIUserController : ControllerBase
     {
         #region Injection
@@ -47,63 +45,11 @@ namespace SocialMedia.API.Controllers
 
         #endregion
 
-        #region Get User FullInformation from DataBase
-
-        [HttpGet]
-        [Route("FullInforMation")]
-        public async Task<ActionResult<IEnumerable<UserViewModel>>> GetFullInfoUsers()
-        {
-            try
-            {
-                var users = await _userServies.GetUsersAsync();
-
-                return Ok(users);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internet Server Error {ex.Message}");
-            }
-        }
-
-        [HttpGet]
-        [Route("FullInforMationWithUserName")]
-        public async Task<ActionResult<IEnumerable<UserViewModel>>> FullInforMationWithUserName([FromBody] UserForGetInformation user)
-        {
-            try
-            {
-                var users = await _userServies.GetUserWithUserNameAndEmail(user.UserName, user.Email);
-
-                if (users == null)
-                    return NotFound(new
-                    {
-                        StatuceFindUser = $"Cannot Find user with {user.UserName} and {user.Email}"
-                    });
-
-                return Ok(users);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internet Server Error {ex.Message}");
-            }
-        }
-
-
-        [Route("GetUserWithoutPassword")]
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<UserViewModel>>> GetUserWithoutPassword()
-        {
-            var users = await _userServies.GetUsersAsync();
-
-            return Ok(_mapper.Map<IEnumerable<UserViewModel>>(users));
-        }
-
-        #endregion
-
         #region Register User
 
         [HttpPost]
         [Route("RegisterUser")]
-        public async Task<ActionResult> RegisterUser([FromBody] UserRegisterViewModel userRegisterViewModel)
+        public async Task<ActionResult> RegisterUser([FromBody] UserRegisterViewModel Register)
         {
             if (!ModelState.IsValid)
             {
@@ -112,273 +58,44 @@ namespace SocialMedia.API.Controllers
 
             try
             {
-                if (_userServies.IsExistUser(userRegisterViewModel.UserName))
+                if (_userServies.IsExistUser(Register.UserName))
                 {
-                    return BadRequest("User Name is Invalid");
+                    return BadRequest("Cannot Chose this User name");
                 }
 
-                if (_userServies.IsExistEmail(userRegisterViewModel.Email))
+                if (_userServies.IsExistEmail(Register.Email))
                 {
-                    return BadRequest("Email is Invalid");
+                    return BadRequest("Cannot Chose this Email");
                 }
 
-                var userId = await _userServies.RegisterUserAsync(userRegisterViewModel);
+                var user = await _userServies.RegisterUserAsync(Register);
 
-                var user = await _userServies.GetUserByNameAsync(userRegisterViewModel.UserName);
-
-                var token = await _authenticationservies.GetJWTTokenForCookiesAnaAuthenticate(user.UserName,
-    user.Email, user.ActiveCode, _configuration["Authentication:SecretForKey"]);
-
-                string linkActivateUserAccount;
                 if (user != null)
                 {
-                    linkActivateUserAccount = $"https://localhost:8080/api/Users/ActiveUserAccount/{user.ActiveCode}";
+                    var token = await _authenticationservies.GetJWTTokenForCookiesAnaAuthenticate(user.UserName,
+                                    user.Email, user.ActiveCode, _configuration["Authentication:SecretForKey"], user.IsActive);
+
+                    return Ok(new
+                    {
+                        UserName = user.UserName,
+                        Email = user.Email,
+                        Token = token,
+                        StatuceUserRegiser = "SuccessFully",
+
+                    });
                 }
                 else
                 {
-                    linkActivateUserAccount = "Cannot Find User Activate Code";
+                    return BadRequest(new
+                    {
+                        Statuce = "Register Is UnSuccessFully"
+                    });
                 }
-
-                return Ok(new
-                {
-                    UserId = userId,
-                    Email = userRegisterViewModel.Email,
-                    UserName = userRegisterViewModel.UserName,
-                    StatuceActivatUserAccount = userRegisterViewModel.IsActive,
-                    StatuceUserRegiser = "SuccessFully",
-                    ActivateLink = linkActivateUserAccount,
-                    Token = token
-                });
             }
             catch (Exception ex)
             {
                 return StatusCode(500, $"Internet Server Error : {ex.Message}");
             }
-        }
-
-        #endregion
-
-        #region Partial Update for User Table
-
-        [HttpPatch]
-        [Route("PartialUpdate/{id}")]
-        public async Task<ActionResult> UpdateUserPatch(int id, JsonPatchDocument<PartialUpdateUserViewModel> patchDoc)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            if (patchDoc == null)
-            {
-                return BadRequest(ModelState);
-            }
-
-            var existUser = await _userServies.GetUserByIdAsync(id);
-            if (existUser == null)
-            {
-                return NotFound();
-            }
-
-            try
-            {
-                var userVieModel = _mapper.Map<PartialUpdateUserViewModel>(existUser);
-
-                patchDoc.ApplyTo(userVieModel, ModelState);
-                if (!ModelState.IsValid)
-                {
-                    return BadRequest(ModelState);
-                }
-
-                var updateUser = _mapper.Map(userVieModel, existUser);
-                _userServies.UpdateUser(updateUser);
-
-                return NoContent();
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Interner Server Error : {ex.Message}");
-            }
-        }
-
-        #endregion
-
-        #region Update(Put)
-
-        [HttpPut]
-        [Route("FullUpdate")]
-        public async Task<ActionResult> UpdateUser([FromBody] FullUpdateUserViewModel user)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            var username = user.UserName;
-            var existUser = await _userServies.GetUserByNameAsync(username);
-
-            if (existUser == null)
-            {
-                return NotFound(new
-                {
-                    StatuceFindUser = $"NotFound User with {user.UserName}"
-                });
-            }
-
-            try
-            {
-                var userVieModel = _mapper.Map<FullUpdateUserViewModel>(existUser);
-
-                if (!ModelState.IsValid)
-                {
-                    return BadRequest(ModelState);
-                }
-
-                existUser.Email = user.Email;
-                existUser.Bio = user.Bio;
-
-                return Ok(new
-                {
-                    StatuceUpdateUser = "SuccessFully",
-                    UserName = user.UserName,
-                    ReplaceEmail = user.Email,
-                    ReplaceBio = user.Bio,
-                });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Interner Server Error : {ex.Message}");
-            }
-        }
-
-        #endregion
-
-        #region Delet User with User ID
-
-        [HttpDelete]
-        [Route("DelelUser")]
-        public async Task<ActionResult> DeletUser([FromBody] int userId)
-        {
-            var user = await _userServies.GetSingleUserAsync(userId);
-            if (user == null)
-            {
-                return NotFound();
-            }
-
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            try
-            {
-                _userServies.DeletUser(user);
-                return Ok(new
-                {
-                    DeletUserStatuce = "SuccessFully"
-                });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internet Server Error : {ex.Message}");
-            }
-        }
-
-        #endregion
-
-        #region DeletUserWithUserName
-
-        [HttpDelete]
-        [Route("DeletUserWithUserName")]
-        public async Task<ActionResult> DeletUserWithToken([FromBody] UserForGetInformation user)
-        {
-            try
-            {
-                var exixstUser = await _userServies.GetUserWithUserNameAndEmail(user.UserName, user.Email);
-
-                if (user == null)
-                {
-                    return NotFound("Not Found User For Deleting");
-                }
-
-                _userServies.DeletUserWithTokenAsync(exixstUser);
-
-                return Ok("User Deleted SuccessFully");
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Interner Server Error : {ex.Message}");
-            }
-        }
-
-        #endregion
-
-        #region Edite user Password
-
-        [HttpPatch]
-        [Route("ResetUserPassword/{activeCode}")]
-        public async Task<ActionResult> ResetUserPassword(string activeCode,
-            [FromBody] JsonPatchDocument<ResetPasswordViewModel> resetPatchDoc)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            var existUser = await _userServies.GetUserByActiveCodeAsync(activeCode);
-
-            if (existUser == null)
-            {
-                return NotFound();
-            }
-
-            try
-            {
-                var userViewModel = _mapper.Map<ResetPasswordViewModel>(existUser);
-                resetPatchDoc.ApplyTo(userViewModel, ModelState);
-
-                if (!ModelState.IsValid)
-                {
-                    return BadRequest();
-                }
-
-                var updatePasswordUser = _mapper.Map(userViewModel, existUser);
-                updatePasswordUser.Userpassword = PasswordHelper.EncodePasswordMd5(userViewModel.Password);
-
-                updatePasswordUser.ActiveCode = NameGenerator.GenerateUniqCode();
-
-                _userServies.UpdateUser(updatePasswordUser);
-
-                return NoContent();
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internet Servies Error {ex.Message}");
-            }
-        }
-
-        #endregion
-
-        #region Active user
-
-        [Route("ActiveUserAccount/{Id}")]
-        [HttpPost]
-        public async Task<ActionResult> ActiveUserAccount(string Id)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            bool IsSuccess = await _userServies.ActiveUserAccountAsync(Id);
-
-            if (!IsSuccess)
-            {
-                return BadRequest();
-            }
-
-            return Ok("User Account Active Successesfully");
-
         }
 
         #endregion
@@ -399,28 +116,29 @@ namespace SocialMedia.API.Controllers
             if (user != null)
             {
                 var token = await _authenticationservies.GetJWTTokenForCookiesAnaAuthenticate(user.UserName,
-                    user.Email, user.ActiveCode, _configuration["Authentication:SecretForKey"]);
+                    user.Email, user.ActiveCode, _configuration["Authentication:SecretForKey"], user.IsActive);
 
                 if (user.IsActive)
                 {
                     return Ok(new
                     {
                         UserLoginStatuce = "SuccessFully",
-                        UserId = user.UserId,
                         UserName = user.UserName,
                         UserEmail = user.Email,
+                        token = token,
+                        Bio = user.Bio,
                         UserActiveAccount = true,
-                        token = token
+
                     });
                 }
                 else
                 {
                     return BadRequest(new
                     {
-                        UserLoginStatuce = "Unsuccessful",
-                        UserActiveAccount = false,
+                        UserLoginStatuce = "Unsuccessful, The user has not activated his account",
                         UserName = user.UserName,
                         UserEmail = user.Email,
+                        UserActiveAccount = false
                     });
                 }
             }
@@ -430,6 +148,194 @@ namespace SocialMedia.API.Controllers
             }
         }
 
+        #endregion
+
+        #region Edite user Password When User Is Login
+
+        [HttpPost]
+        [Authorize]
+        [Route("ResetUserPassword")]
+        public async Task<ActionResult> ResetUserPassword([FromBody] ResetPasswordViewModel resetPatss)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var existUser = await _userServies.GetUserByNameAsync(resetPatss.UserName);
+
+            if (existUser == null)
+            {
+                return NotFound();
+            }
+
+            try
+            {
+                existUser.Userpassword = PasswordHelper.EncodePasswordMd5(resetPatss.Password);
+                _userServies.SaveChangesAsync();
+
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internet Servies Error {ex.Message}");
+            }
+        }
+
+        #endregion
+
+        #region Edite User Password When User Forgot
+
+        [HttpPost]
+        [Authorize]
+        [Route("ResetUserPassword/Forgot")]
+        public async Task<ActionResult> ResetPassForGot([FromBody] ResetPasswordViewModel reset)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (reset.Email == null)
+                return BadRequest("لطفا ایمیل را وارد نمایید");
+
+            var exixstUser = await _userServies.GetUserByEmailAsync(reset.Email);
+
+            if (exixstUser == null)
+                return NotFound($"موجود نیست {reset.Email} کاربر مورد نظر با ایمیل");
+
+            if (!exixstUser.IsActive)
+                return BadRequest("حساب کاربری شما فعال نیست");
+
+            try
+            {
+                var resesetpassw = await _userServies.ResetUserPassword(reset.Password, reset.Email);
+
+                if (!resesetpassw)
+                {
+                    return BadRequest(new
+                    {
+                        Statuce = "UnSuccessFully"
+                    });
+                }
+
+                return Ok(new
+                {
+                    Statuce = "SuccessFully",
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Internet Server Error : {ex.Message}");
+            }
+        }
+
+        #endregion
+
+        #region Update(Put)
+
+        [HttpPut]
+        [Route("FullUpdate")]
+        [Authorize]
+        public async Task<ActionResult> UpdateUser([FromBody] FullUpdateUserViewModel user)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var existUser = await _userServies.GetUserByNameAsync(user.OldUserName);
+
+            if (existUser == null)
+            {
+                return NotFound(new
+                {
+                    StatuceFindUser = $"NotFound User with {user.OldUserName}"
+                });
+            }
+
+            try
+            {
+                var userVieModel = _mapper.Map<FullUpdateUserViewModel>(existUser);
+
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
+
+                if(_userServies.IsExistUser(userVieModel.NewUserName))
+                    return BadRequest("نام کاربری در دسترس نیست, لطفا نام کاربری دیگری انتخواب کنید");
+
+                existUser.UserName = user.NewUserName;
+                existUser.Email = user.NewEmail;
+                existUser.Bio = user.NewBio;
+
+                _userServies.SaveChangesAsync();
+
+                return Ok(new
+                {
+                    StatuceUpdateUser = "SuccessFully",
+                    NewUserName = user.NewUserName,
+                    NewEmail = user.NewEmail,
+                    NewReplaceBio = user.NewBio,
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Interner Server Error : {ex.Message}");
+            }
+        }
+
+        #endregion
+
+        #region DeletUserWithUserName
+
+        [HttpDelete]
+        [Route("DeletUserWithUserName")]
+        [Authorize]
+        public async Task<ActionResult> DeletUserWithToken([FromBody] UserForGetInformation user)
+        {
+            try
+            {
+                var exixstUser = await _userServies.GetUserWithUserName(user.UserName);
+
+                if (exixstUser == null)
+                {
+                    return NotFound("Not Found User For Deleting");
+                }
+
+                _userServies.DeletUserWithTokenAsync(exixstUser);
+
+                return Ok("User Deleted SuccessFully");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Interner Server Error : {ex.Message}");
+            }
+        }
+
+        #endregion
+
+        #region Active user
+
+        [Route("ActiveUserAccount/{Id}")]
+        [HttpPost]
+        [Authorize]
+        public async Task<ActionResult> ActiveUserAccount(string Id)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            bool IsSuccess = await _userServies.ActiveUserAccountAsync(Id);
+
+            if (!IsSuccess)
+            {
+                return BadRequest();
+            }
+
+            return Ok("User Account Active Successesfully");
+
+        }
         #endregion
     }
 }

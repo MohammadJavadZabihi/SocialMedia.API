@@ -29,7 +29,7 @@ namespace SocialMedia.Core.Servies.Interface
         Task<IEnumerable<User>> GetUsersAsync();
         Task<bool> GetExixstUserAsync(int userid);
         Task AddUserAsync(User user);
-        Task<int> RegisterUserAsync(UserRegisterViewModel userViewModel);
+        Task<User> RegisterUserAsync(UserRegisterViewModel userViewModel);
         Task<bool> SaveChangesAsync();
         Task<User?> GetUserByIdAsync(int id);
         Task<User?> GetSingleUserAsync(int id);
@@ -38,7 +38,9 @@ namespace SocialMedia.Core.Servies.Interface
         Task<User?> LoginuserAsync(UserLoginViewModel user);
         Task<User?> GetUserByNameAsync(string username);
         Task DeletUserWithTokenAsync(User user);
-        Task<User?> GetUserWithUserNameAndEmail(string username, string email);
+        Task<User?> GetUserWithUserName(string username);
+        Task<User?> GetUserByEmailAsync(string email);
+        Task<bool> ResetUserPassword(string password, string email);
         #endregion
     }
 }

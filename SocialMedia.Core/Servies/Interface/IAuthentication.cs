@@ -12,6 +12,6 @@ namespace SocialMedia.Core.Servies.Interface
         Task AddUserAsync(UserAuthenticationForApiKey user);
         Task<bool> RemoveUserAsync(int Id);
         Task<UserAuthenticationForApiKey?> FindeUser(string username, string password);
-        Task<string> GetJWTTokenForCookiesAnaAuthenticate(string username, string email, string activeCode,string key);
+        Task<string> GetJWTTokenForCookiesAnaAuthenticate(string username, string email, string activeCode,string key, bool IsActive);
     }
 }

@@ -111,22 +111,31 @@ namespace SocialMedia.Core.Servies
             return _context.Users.FirstOrDefault(u => u.Email == email && u.Userpassword == hashPassword);
         }
 
-        public async Task<int> RegisterUserAsync(UserRegisterViewModel userViewModel)
+        public async Task<User> RegisterUserAsync(UserRegisterViewModel userViewModel)
         {
-            var user = new User
+            try
             {
-                ActiveCode = NameGenerator.GenerateUniqCode(),
-                Bio = userViewModel.Bio,
-                Email = userViewModel.Email,
-                ProfileURL = "AvatarPic/AVA.png",
-                UserName = userViewModel.UserName,
-                Userpassword = PasswordHelper.EncodePasswordMd5(userViewModel.Password)
-            };
 
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
 
-            return user.UserId;
+                var user = new User
+                {
+                    ActiveCode = NameGenerator.GenerateUniqCode(),
+                    Bio = userViewModel.Bio,
+                    Email = userViewModel.Email,
+                    ProfileURL = "AvatarPic/AVA.png",
+                    UserName = userViewModel.UserName,
+                    Userpassword = PasswordHelper.EncodePasswordMd5(userViewModel.Password)
+                };
+
+                _context.Users.Add(user);
+                await _context.SaveChangesAsync();
+
+                return user;
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         public async Task<bool> SaveChangesAsync()
@@ -188,9 +197,27 @@ namespace SocialMedia.Core.Servies
             }
         }
 
-        public async Task<User?> GetUserWithUserNameAndEmail(string username, string email)
+        public async Task<User?> GetUserWithUserName(string username)
         {
-            return await _context.Users.FirstOrDefaultAsync(u => u.UserName == username && u.Email == email);
+            return await _context.Users.FirstOrDefaultAsync(u => u.UserName == username);
+        }
+
+        public async Task<User?> GetUserByEmailAsync(string email)
+        {
+            return await _context.Users.SingleOrDefaultAsync(u => u.Email == email);
+        }
+
+        public async Task<bool> ResetUserPassword(string password, string email)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+
+            if (user == null)
+                return false;
+
+            user.Userpassword = PasswordHelper.EncodePasswordMd5(password);
+            _context.SaveChangesAsync();
+
+            return true;
         }
     }
 }

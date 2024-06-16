@@ -64,7 +64,6 @@ builder.Services.AddSingleton<FileExtensionContentTypeProvider>();
 builder.Services.AddScoped<IUserServies, UserServies>();
 builder.Services.AddScoped<IAuthentication, AuthenticationServies>();
 builder.Services.AddScoped<SendEmailServies>();
-
 #endregion
 
 builder.Services.AddEndpointsApiExplorer();
@@ -77,6 +76,7 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+
 }
 
 app.UseHttpsRedirection();
