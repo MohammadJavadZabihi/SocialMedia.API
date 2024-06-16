@@ -76,12 +76,12 @@ namespace SocialMedia.API.Controllers
                                     user.Email, user.ActiveCode, _configuration["Authentication:SecretForKey"], user.IsActive);
 
                     return Ok(new
-                    {
+                    {                        
+                        StatuceUserRegiser = "SuccessFully",
                         UserName = user.UserName,
                         Email = user.Email,
+                        Bio = user.Bio,
                         Token = token,
-                        StatuceUserRegiser = "SuccessFully",
-
                     });
                 }
                 else
